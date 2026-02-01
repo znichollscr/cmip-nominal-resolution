@@ -1,0 +1,18 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v0.14.4
+_src_path: gl:openscm/copier-core-python-repository
+conda_release: false
+email: zebedee.nicholls@climate-resource.com
+include_cli: false
+name: Zebedee Nicholls
+notebook_based_docs: true
+package_manager: uv
+pandas_doctests: false
+plot_dependencies: false
+project_description_short: Calculation of nominal resolution for CMIP (Coupled Model
+    Intercomparison Project) datasets.
+project_name_human: CMIP nominal resolution
+project_name_pip: cmip-nominal-resolution
+project_name_python: cmip_nominal_resolution
+project_url: https://github.com/znichollscr/cmip-nominal-resolution
+track_lock_file: true
