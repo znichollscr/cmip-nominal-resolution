@@ -28,11 +28,11 @@ DEFAULT_NOMINAL_RESOLUTION_THRESHOLDS = {
 
 
 def calculate_central_angle_unitless(
-    lat_lon_a: npt.NDArray[np.number[float]], lat_lon_b: npt.NDArray[np.number[float]]
+    lat_a: float, lon_a: float, lat_b: float, lon_b: float
 ) -> float:
-    lat_a_r = lat_lon_a[0] * np.pi / 180
-    lat_b_r = lat_lon_b[0] * np.pi / 180
-    delta_lon_r = (lat_lon_a[1] - lat_lon_b[1]) * np.pi / 180
+    lat_a_r = lat_a * np.pi / 180
+    lat_b_r = lat_b * np.pi / 180
+    delta_lon_r = (lon_a - lon_b) * np.pi / 180
 
     central_angle = np.arccos(
         np.sin(lat_a_r) * np.sin(lat_b_r)
@@ -40,19 +40,6 @@ def calculate_central_angle_unitless(
     )
 
     return central_angle
-
-
-def calculate_central_angles_for_cell_unitless(
-    single_cell_vertices: npt.NDArray[np.number[float]],
-) -> npt.NDArray[np.number[float]]:
-    ncells = single_cell_vertices.shape[0]
-    central_angles = np.zeros(int(ncells * (ncells - 1) / 2))
-    for i, (lat_lon_a, lat_lon_b) in enumerate(
-        itertools.combinations(single_cell_vertices, 2)
-    ):
-        central_angles[i] = calculate_central_angle_unitless(lat_lon_a, lat_lon_b)
-
-    return central_angles
 
 
 def calculate_central_angles_unitless(
@@ -64,10 +51,17 @@ def calculate_central_angles_unitless(
             int(cell_vertices.shape[1] * (cell_vertices.shape[1] - 1) / 2),
         )
     )
-    # TODO: vectorise or speed up, I think this is the slow bit
-    for i, single_cell_vertices in enumerate(cell_vertices):
-        central_angles[i] = calculate_central_angles_for_cell_unitless(
-            single_cell_vertices=single_cell_vertices
+    for i, (cell_index_a, cell_index_b) in enumerate(
+        itertools.combinations(np.arange(cell_vertices.shape[1]), 2)
+    ):
+        cell_vertices_a = cell_vertices[:, cell_index_a, :]
+        cell_vertices_b = cell_vertices[:, cell_index_b, :]
+
+        central_angles[:, i] = calculate_central_angle_unitless(
+            lat_a=cell_vertices_a[:, 0],
+            lon_a=cell_vertices_a[:, 1],
+            lat_b=cell_vertices_b[:, 0],
+            lon_b=cell_vertices_b[:, 1],
         )
 
     return central_angles

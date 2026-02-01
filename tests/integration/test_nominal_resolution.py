@@ -101,6 +101,10 @@ def generate_regular_lat_lon_grid_test_info(
         (80, 40, "500 km"),
         (180, 90, "250 km"),
         (360, 180, "100 km"),
+        (int(180 / 0.25), int(360 / 0.5), "50 km"),
+        (int(180 / 0.125), int(360 / 0.25), "25 km"),
+        # Higher resolution than this is very slow to calculate
+        # and requires lots of memory just to hold the cell vertices.
     ),
 )
 def test_regular_lat_lon_grids(nlon, nlat, exp):
