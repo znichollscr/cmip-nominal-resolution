@@ -67,7 +67,7 @@ def calculate_central_angles_unitless(
     return central_angles
 
 
-def calculate_mean_resolution_unitless(
+def calculate_mean_resolution_from_max_distances_unitless(
     max_distances: npt.NDArray[np.number[float]],
     cell_areas: npt.NDArray[np.number[float]],
 ) -> float:
@@ -91,6 +91,23 @@ def determine_nominal_resolution(
     raise ValueError(msg)
 
 
+# TODO: move
+def calculate_mean_resolution_unitless(
+    cell_vertices: npt.NDArray[np.number[float]],
+    cell_areas: npt.NDArray[np.number[float]],
+    earth_radius: float = 6371.0,  # km
+) -> str:
+    # Location of cell vertices in deg north and east
+    # Shape: [ncells, nvertices, 2 (lat, lon)]
+    central_angles = calculate_central_angles_unitless(cell_vertices=cell_vertices)
+    max_distances = earth_radius * np.max(central_angles, axis=1)
+    mean_resolution = calculate_mean_resolution_from_max_distances_unitless(
+        max_distances, cell_areas
+    )
+
+    return mean_resolution
+
+
 def calculate_nominal_resolution_unitless(
     cell_vertices: npt.NDArray[np.number[float]],
     cell_areas: npt.NDArray[np.number[float]],
@@ -99,17 +116,44 @@ def calculate_nominal_resolution_unitless(
 ) -> str:
     # Location of cell vertices in deg north and east
     # Shape: [ncells, nvertices, 2 (lat, lon)]
+    # TODO: refactor to allow injection of mean resolution calculating function
     if nominal_resolution_thresholds is None:
         nominal_resolution_thresholds = DEFAULT_NOMINAL_RESOLUTION_THRESHOLDS
 
     central_angles = calculate_central_angles_unitless(cell_vertices=cell_vertices)
     max_distances = earth_radius * np.max(central_angles, axis=1)
-    mean_resolution = calculate_mean_resolution_unitless(max_distances, cell_areas)
+    mean_resolution = calculate_mean_resolution_from_max_distances_unitless(
+        max_distances, cell_areas
+    )
     nominal_resolution = determine_nominal_resolution(
         mean_resolution, nominal_resolution_thresholds
     )
 
     return nominal_resolution
+
+
+# TODO: move
+def calculate_mean_resolution_regular_lat_lon_grid_fast_unitless(
+    lat_spacing: float,
+    lon_spacing: float,
+    earth_radius: float = 6371.0,  # km
+) -> str:
+    lat_spacing_r = lat_spacing * np.pi / 180
+    lon_spacing_r = lon_spacing * np.pi / 180
+
+    mean_resolution = (
+        earth_radius
+        * lat_spacing_r
+        / 2
+        * (
+            1
+            + (lat_spacing_r**2 + lon_spacing_r**2)
+            / (lat_spacing_r * lon_spacing_r)
+            * np.arctan(lon_spacing_r / lat_spacing_r)
+        )
+    )
+
+    return mean_resolution
 
 
 def calculate_nominal_resolution_regular_lat_lon_grid_fast_unitless(
@@ -118,6 +162,7 @@ def calculate_nominal_resolution_regular_lat_lon_grid_fast_unitless(
     nominal_resolution_thresholds: dict[float, str] | None = None,
     earth_radius: float = 6371.0,  # km
 ) -> str:
+    # TODO: refactor to allow injection of mean_resolution calculating function
     if nominal_resolution_thresholds is None:
         nominal_resolution_thresholds = DEFAULT_NOMINAL_RESOLUTION_THRESHOLDS
 

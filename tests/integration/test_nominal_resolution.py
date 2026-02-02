@@ -9,15 +9,11 @@ import pytest
 from attrs import define
 
 from cmip_nominal_resolution.nominal_resolution import (
+    calculate_mean_resolution_regular_lat_lon_grid_fast_unitless,
+    calculate_mean_resolution_unitless,
     calculate_nominal_resolution_regular_lat_lon_grid_fast_unitless,
     calculate_nominal_resolution_unitless,
 )
-
-# - regular lat lon grid
-#    - test against analytic solution (also mean resolution, more precise)
-# - irregular grid (e.g. triangles, hexagons)
-# - some funky arrangement of cells
-# - entry points: pint, numpy, xarray and warning handling
 
 
 @define
@@ -169,3 +165,34 @@ def test_regular_lat_lon_grids_analytical(lat_delta, lon_delta, exp):
     )
 
     assert res == exp
+
+
+# TODO: move this to a different test file
+@pytest.mark.parametrize(
+    "nlon, nlat",
+    (
+        (3, 4),
+        (18, 90),
+        (180, 10),
+        (360, 180),
+    ),
+)
+def test_regular_lat_lon_grids_compared_to_analytical_mean_resolution(nlon, nlat):
+    info = generate_regular_lat_lon_grid_test_info(nlon=nlon, nlat=nlat)
+
+    res_numerical = calculate_mean_resolution_unitless(
+        info.cell_vertices, info.cell_areas
+    )
+    res_analytical = calculate_mean_resolution_regular_lat_lon_grid_fast_unitless(
+        lat_spacing=info.lat_delta, lon_spacing=info.lon_delta
+    )
+
+    np.testing.assert_allclose(
+        res_numerical, res_analytical, rtol=0.02 * res_numerical / 10_000
+    )
+
+
+# - irregular grid (e.g. triangles, hexagons)
+# - cells with varying numbers of vertices
+# - some funky arrangement of cells
+# - entry points: pint, numpy, xarray and warning handling
