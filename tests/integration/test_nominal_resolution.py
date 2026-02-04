@@ -55,10 +55,10 @@ def generate_regular_lat_lon_grid_test_info(
             np.reshape(np.dstack(np.meshgrid(lons, lats)), (ncells, 2)), axis=1
         )
 
-    lower_lefts = get_cell_locs(lon_lower, lat_lower)
-    lower_rights = get_cell_locs(lon_upper, lat_lower)
-    upper_lefts = get_cell_locs(lon_lower, lat_upper)
-    upper_rights = get_cell_locs(lon_upper, lat_upper)
+    lower_lefts = get_cell_locs(lons=lon_lower, lats=lat_lower)
+    lower_rights = get_cell_locs(lons=lon_upper, lats=lat_lower)
+    upper_lefts = get_cell_locs(lons=lon_lower, lats=lat_upper)
+    upper_rights = get_cell_locs(lons=lon_upper, lats=lat_upper)
 
     cell_vertices = np.stack(
         [lower_lefts, lower_rights, upper_rights, upper_lefts], axis=1
@@ -85,6 +85,7 @@ def generate_regular_lat_lon_grid_test_info(
     return res
 
 
+# TODO: move to regression test
 @pytest.mark.parametrize(
     "nlon, nlat, exp",
     (
@@ -192,7 +193,167 @@ def test_regular_lat_lon_grids_compared_to_analytical_mean_resolution(nlon, nlat
     )
 
 
-# - irregular grid (e.g. triangles, hexagons)
-# - cells with varying numbers of vertices
-# - some funky arrangement of cells
+# TODO: change all to tests of mean resolution
+@pytest.mark.parametrize(
+    "side_length, exp",
+    (
+        (30.0, "2500 km"),
+        (3.0, "250 km"),
+        (1.0, "100 km"),
+        (0.25, "25 km"),
+        (0.005, "0.5 km"),
+    ),
+)
+def test_triangular_grid(side_length, exp):
+    dlat = side_length * np.sin(60.0 * np.pi / 180)
+    origin_cell = np.array(
+        [
+            [0.0, 0.0],
+            [0.0, side_length],
+            [dlat, side_length / 2.0],
+        ]
+    )
+
+    lon_shift_cell_a = np.copy(origin_cell)
+    lon_shift_cell_a[:, 1] += side_length
+
+    lon_shift_cell_b = np.copy(origin_cell)
+    lon_shift_cell_b[:, 1] += 2 * side_length
+
+    inverted_cell = np.array(
+        [
+            [0.0, side_length],
+            [dlat, 3 * side_length / 2.0],
+            [dlat, side_length / 2.0],
+        ]
+    )
+
+    inverted_lon_shift_cell_a = np.copy(inverted_cell)
+    inverted_lon_shift_cell_a[:, 1] += side_length
+
+    inverted_lon_shift_cell_b = np.copy(inverted_cell)
+    inverted_lon_shift_cell_b[:, 1] += 2 * side_length
+
+    cell_vertices = np.stack(
+        [
+            origin_cell,
+            lon_shift_cell_a,
+            lon_shift_cell_b,
+            inverted_cell,
+            inverted_lon_shift_cell_b,
+            inverted_lon_shift_cell_b,
+        ]
+    )
+    cell_areas = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+
+    res = calculate_nominal_resolution_unitless(cell_vertices, cell_areas)
+
+    assert res == exp
+
+
+# TODO: change all to tests of mean resolution
+@pytest.mark.parametrize(
+    "side_length, exp",
+    (
+        (20.0, "5000 km"),
+        (2.0, "500 km"),
+        (0.2, "50 km"),
+    ),
+)
+def test_hexagonal_grid(side_length, exp):
+    dlat = side_length * np.cos(30.0 * np.pi / 180)
+    dlon = side_length * np.sin(30.0 * np.pi / 180)
+
+    origin_cell = np.array(
+        [
+            [0.0, 0.0],
+            [0.0, side_length],
+            [dlat, side_length + dlon],
+            [2 * dlat, side_length],
+            [2 * dlat, 0.0],
+            [dlat, -dlon],
+        ]
+    )
+
+    middle_cell = np.copy(origin_cell)
+    middle_cell[:, 1] += side_length + dlon
+    middle_cell[:, 0] += dlat
+
+    lon_shift_cell = np.copy(origin_cell)
+    lon_shift_cell[:, 1] += 2 * side_length + 2 * dlon
+
+    cell_vertices = np.stack([origin_cell, middle_cell, lon_shift_cell])
+    cell_areas = np.array([1.0, 1.0, 1.0])
+
+    res = calculate_nominal_resolution_unitless(cell_vertices, cell_areas)
+
+    assert res == exp
+
+
+# TODO: change all to tests of mean resolution
+@pytest.mark.parametrize(
+    "side_length, exp",
+    (
+        (20.0, "5000 km"),
+        (2.0, "500 km"),
+        (0.2, "50 km"),
+    ),
+)
+def test_triangle_hexagonal_grid(side_length, exp):
+    dlat = side_length * np.cos(30.0 * np.pi / 180)
+    dlon = side_length * np.sin(30.0 * np.pi / 180)
+
+    origin_cell_hexagon = np.array(
+        [
+            [0.0, 0.0],
+            [0.0, side_length],
+            [dlat, side_length + dlon],
+            [2 * dlat, side_length],
+            [2 * dlat, 0.0],
+            [dlat, -dlon],
+        ]
+    )
+
+    lon_shift_cell_hexagon = np.copy(origin_cell_hexagon)
+    lon_shift_cell_hexagon[:, 1] += side_length + 2 * dlon
+
+    upright_triangle = np.ma.masked_invalid(
+        [
+            [0.0, side_length],
+            [0.0, 2 * side_length],
+            [dlat, 3 * side_length / 2.0],
+            [np.nan, np.nan],
+            [np.nan, np.nan],
+            [np.nan, np.nan],
+        ]
+    )
+
+    upside_down_triangle = np.ma.masked_invalid(
+        [
+            [2 * dlat, side_length],
+            [2 * dlat, 2 * side_length],
+            [dlat, 3 * side_length / 2.0],
+            [np.nan, np.nan],
+            [np.nan, np.nan],
+            [np.nan, np.nan],
+        ]
+    )
+
+    cell_vertices = np.stack(
+        [
+            origin_cell_hexagon,
+            lon_shift_cell_hexagon,
+            upright_triangle,
+            upside_down_triangle,
+        ]
+    )
+    cell_areas = np.array([6.0, 6.0, 1.0, 1.0])
+
+    res = calculate_nominal_resolution_unitless(cell_vertices, cell_areas)
+
+    assert res == exp
+
+
+# - some funky arrangement of cells, probably best to use real data from AWI-CM
+
 # - entry points: pint, numpy, xarray and warning handling
