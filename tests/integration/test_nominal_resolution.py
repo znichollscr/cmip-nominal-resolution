@@ -6,6 +6,7 @@ These are high level integration tests.
 
 import numpy as np
 import pytest
+import xarray as xr
 from attrs import define
 
 from cmip_nominal_resolution.nominal_resolution import (
@@ -354,6 +355,27 @@ def test_triangle_hexagonal_grid(side_length, exp):
     assert res == exp
 
 
-# - some funky arrangement of cells, probably best to use real data from AWI-CM
+def test_irregular_grid(test_data_path):
+    exp = "50 km"
+
+    fp = test_data_path / "areacello_Ofx_AWI-CM-1-1-MR_ssp370_r4i1p1f1_gn.nc"
+
+    ds = xr.open_dataset(fp)
+
+    cell_vertices = np.dstack([ds["lat_bnds"].values, ds["lon_bnds"].values])
+
+    # I don't think this is meant to be needed according to CF-conventions,
+    # but there is no checking of the data so it's not surprising there are issues.
+    for i in range(cell_vertices.shape[1] - 1)[::-1]:
+        cell_vertices[
+            np.where(np.equal(cell_vertices[:, i + 1, :], cell_vertices[:, i, :]))
+        ] = np.nan
+
+    cell_areas = ds["areacello"].values
+
+    res = calculate_nominal_resolution_unitless(cell_vertices, cell_areas)
+
+    assert res == exp
+
 
 # - entry points: pint, numpy, xarray and warning handling

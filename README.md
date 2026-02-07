@@ -89,6 +89,24 @@ The (non-locked) version of CMIP nominal resolution can be installed with
     pip install cmip-nominal-resolution
     ```
 
+Additional dependencies can be installed using
+
+=== "mamba"
+    If you are installing with mamba, we recommend
+    installing the extras by hand because there is no stable
+    solution yet (see [conda issue #7502](https://github.com/conda/conda/issues/7502))
+
+=== "conda"
+    If you are installing with conda, we recommend
+    installing the extras by hand because there is no stable
+    solution yet (see [conda issue #7502](https://github.com/conda/conda/issues/7502))
+
+=== "pip"
+    ```sh
+    # To add dependencies for netCDF
+    pip install 'cmip-nominal-resolution[netcdf]'
+    ```
+
 ### For developers
 
 For development, we rely on [uv](https://docs.astral.sh/uv/)

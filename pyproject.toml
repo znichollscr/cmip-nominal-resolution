@@ -41,6 +41,10 @@ Issues = "https://github.com/znichollscr/cmip-nominal-resolution/issues"
 
 
 [project.optional-dependencies]
+netcdf = [
+    "netcdf4>=1.7.2",
+    "xarray>=2024.7.0",
+]
 
 [dependency-groups]
 # The development dependencies are pinned

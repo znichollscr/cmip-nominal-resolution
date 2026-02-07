@@ -121,7 +121,7 @@ def calculate_nominal_resolution_unitless(
         nominal_resolution_thresholds = DEFAULT_NOMINAL_RESOLUTION_THRESHOLDS
 
     central_angles = calculate_central_angles_unitless(cell_vertices=cell_vertices)
-    max_distances = earth_radius * np.max(central_angles, axis=1)
+    max_distances = earth_radius * np.nanmax(central_angles, axis=1)
     mean_resolution = calculate_mean_resolution_from_max_distances_unitless(
         max_distances, cell_areas
     )
