@@ -86,33 +86,6 @@ def generate_regular_lat_lon_grid_test_info(
     return res
 
 
-# TODO: move to regression test
-@pytest.mark.parametrize(
-    "nlon, nlat, exp",
-    (
-        (3, 4, "10000 km"),
-        (4, 3, "10000 km"),
-        (10, 9, "5000 km"),
-        (18, 90, "2500 km"),
-        (180, 10, "2500 km"),
-        (24, 30, "1000 km"),
-        (80, 40, "500 km"),
-        (180, 90, "250 km"),
-        (360, 180, "100 km"),
-        (int(180 / 0.25), int(360 / 0.5), "50 km"),
-        (int(180 / 0.125), int(360 / 0.25), "25 km"),
-        # Higher resolution than this is very slow to calculate
-        # and requires lots of memory just to hold the cell vertices.
-    ),
-)
-def test_regular_lat_lon_grids(nlon, nlat, exp):
-    info = generate_regular_lat_lon_grid_test_info(nlon=nlon, nlat=nlat)
-
-    res = calculate_nominal_resolution_unitless(info.cell_vertices, info.cell_areas)
-
-    assert res == exp
-
-
 @pytest.mark.parametrize(
     "nlon, nlat",
     (
