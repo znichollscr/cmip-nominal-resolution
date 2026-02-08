@@ -133,7 +133,7 @@ def calculate_mean_resolution(
         Mean resolution for the given set of cells
     """
     central_angles = calculate_central_angles(cell_vertices=cell_vertices)
-    max_distances = earth_radius * np.max(central_angles, axis=1)
+    max_distances = earth_radius * np.nanmax(central_angles, axis=1)
     mean_resolution = np.sum(max_distances * cell_areas) / np.sum(cell_areas)
 
     return mean_resolution
