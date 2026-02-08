@@ -10,7 +10,10 @@ import numpy as np
 import numpy.typing as npt
 from attrs import field, frozen
 
-from cmip_nominal_resolution.mean_resolution import calculate_mean_resolution
+from cmip_nominal_resolution.mean_resolution import (
+    calculate_mean_resolution,
+    calculate_mean_resolution_regular_lat_lon_grid,
+)
 
 ASSUMED_DISTANCE_UNIT: str = "km"
 """
@@ -117,7 +120,7 @@ DEFAULT_NOMINAL_RESOLUTION_THRESHOLD_DEFINITION = NominalResolutionThresholdDefi
 def calculate_nominal_resolution(
     cell_vertices: npt.NDArray[np.number[float]],
     cell_areas: npt.NDArray[np.number[float]],
-    earth_radius: float = 6371.0,  # km
+    earth_radius: float = 6371.0,
     nominal_resolution_thresholds: NominalResolutionThresholdDefinition = DEFAULT_NOMINAL_RESOLUTION_THRESHOLD_DEFINITION,
 ) -> str:
     """
@@ -154,6 +157,47 @@ def calculate_nominal_resolution(
     mean_resolution = calculate_mean_resolution(
         cell_vertices=cell_vertices,
         cell_areas=cell_areas,
+        earth_radius=earth_radius,
+    )
+
+    nominal_resolution = nominal_resolution_thresholds.translate(mean_resolution)
+
+    return nominal_resolution
+
+
+def calculate_nominal_resolution_regular_lat_lon_grid(
+    lat_spacing: float,
+    lon_spacing: float,
+    earth_radius: float = 6371.0,
+    nominal_resolution_thresholds: NominalResolutionThresholdDefinition = DEFAULT_NOMINAL_RESOLUTION_THRESHOLD_DEFINITION,
+) -> str:
+    """
+    Calculate nominal resolution for a regular latitude longitude grid
+
+    Parameters
+    ----------
+    lat_spacing
+        Latitudinal spacing (in degrees)
+
+    lon_spacing
+        Lonitudinal spacing (in degrees)
+
+    earth_radius
+        Radius of the earth to use in calculations
+
+        This should be in km.
+
+    nominal_resolution_thresholds
+        Thresholds to use when converting mean resolution to nominal resolution
+
+    Returns
+    -------
+    :
+        Nominal resolution for the given grid information
+    """
+    mean_resolution = calculate_mean_resolution_regular_lat_lon_grid(
+        lat_spacing=lat_spacing,
+        lon_spacing=lon_spacing,
         earth_radius=earth_radius,
     )
 

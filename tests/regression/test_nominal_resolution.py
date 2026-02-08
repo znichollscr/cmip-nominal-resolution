@@ -6,7 +6,10 @@ import numpy as np
 import pytest
 from attrs import define
 
-from cmip_nominal_resolution.nominal_resolution import calculate_nominal_resolution
+from cmip_nominal_resolution.nominal_resolution import (
+    calculate_nominal_resolution,
+    calculate_nominal_resolution_regular_lat_lon_grid,
+)
 
 
 @define
@@ -100,5 +103,34 @@ def test_regular_lat_lon_grids(nlon, nlat, exp):
     info = generate_regular_lat_lon_grid_test_info(nlon=nlon, nlat=nlat)
 
     res = calculate_nominal_resolution(info.cell_vertices, info.cell_areas)
+
+    assert res == exp
+
+
+@pytest.mark.parametrize(
+    "lat_delta, lon_delta, exp",
+    (
+        (60.0, 90.0, "10000 km"),
+        (45.0, 120.0, "10000 km"),
+        (18.0, 40.0, "5000 km"),
+        (20.0, 8.0, "2500 km"),
+        (1.0, 36.0, "2500 km"),
+        (7.5, 12.0, "1000 km"),
+        (2.0, 5.0, "500 km"),
+        (1.0, 2.0, "250 km"),
+        (0.5, 1.0, "100 km"),
+        (0.25, 0.5, "50 km"),
+        (0.25, 0.25, "25 km"),
+        (0.05, 0.1, "10 km"),
+        (0.025, 0.05, "5 km"),
+        (0.01, 0.025, "2.5 km"),
+        (0.01, 0.01, "1 km"),
+        (0.005, 0.005, "0.5 km"),
+    ),
+)
+def test_regular_lat_lon_grids_analytical(lat_delta, lon_delta, exp):
+    res = calculate_nominal_resolution_regular_lat_lon_grid(
+        lat_spacing=lat_delta, lon_spacing=lon_delta
+    )
 
     assert res == exp
